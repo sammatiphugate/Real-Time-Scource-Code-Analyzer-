@@ -1,0 +1,6 @@
+scp -r -C -o "ProxyJump=guest.test1@scms.unipune.ac.in:9922" "/Users/pranay/Desktop/ne dataset contruction /final22/" zwilling@192.168.38.120:/home/zwilling/Desktop/NCNC/sammati
+
+/Users/pranay/Desktop/ne dataset contruction /final22/pipeline.py
+
+
+

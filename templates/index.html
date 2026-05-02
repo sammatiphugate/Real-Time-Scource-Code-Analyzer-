@@ -5,890 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Source Code Analyzer</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --blue:        #1a2fff;
-      --blue-dark:   #1020cc;
-      --blue-deep:   #0a14a0;
-      --blue-light:  #e8eeff;
-      --blue-mid:    #c8d4ff;
-      --blue-pale:   #f0f4ff;
-      --white:       #ffffff;
-      --gray-50:     #f8faff;
-      --gray-100:    #eef1fa;
-      --gray-200:    #dde3f5;
-      --gray-400:    #9aa5cc;
-      --gray-600:    #5a6690;
-      --gray-800:    #1e2444;
-      --text-main:   #0f1433;
-      --text-muted:  #6070a0;
-      --text-light:  #9aa5cc;
-      --radius-sm:   6px;
-      --radius-md:   10px;
-      --radius-lg:   16px;
-      --radius-xl:   22px;
-      --font-ui:     'Space Grotesk', sans-serif;
-      --font-mono:   'JetBrains Mono', monospace;
-      --shadow-sm:   0 1px 4px rgba(26,47,255,0.08);
-      --shadow-md:   0 4px 20px rgba(26,47,255,0.12);
-      --shadow-lg:   0 8px 40px rgba(26,47,255,0.16);
-    }
-
-    html, body {
-      height: 100%;
-      font-family: var(--font-ui);
-      background: var(--blue-pale);
-      color: var(--text-main);
-      overflow: hidden;
-    }
-
-    /* ── Layout shell ── */
-    .app {
-      display: grid;
-      grid-template-rows: 60px 1fr;
-      grid-template-columns: 220px 1fr;
-      height: 100vh;
-    }
-
-    /* ── Top bar ── */
-    .topbar {
-      grid-column: 1 / -1;
-      background: var(--blue);
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
-      gap: 16px;
-      position: relative;
-      z-index: 10;
-      box-shadow: var(--shadow-md);
-    }
-
-    .topbar-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .logo-icon {
-      width: 32px;
-      height: 32px;
-      background: rgba(255,255,255,0.15);
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-
-    .logo-icon svg { display: block; }
-
-    .logo-text {
-      font-size: 15px;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: -0.01em;
-    }
-
-    .logo-text span { opacity: 0.55; font-weight: 400; }
-
-    .topbar-divider {
-      width: 1px;
-      height: 20px;
-      background: rgba(255,255,255,0.2);
-      margin: 0 4px;
-    }
-
-    .repo-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 20px;
-      padding: 4px 12px 4px 8px;
-      font-size: 11px;
-      color: rgba(255,255,255,0.85);
-      font-family: var(--font-mono);
-      transition: background 0.2s;
-    }
-
-    .repo-badge:hover { background: rgba(255,255,255,0.2); cursor: default; }
-
-    .repo-dot {
-      width: 6px; height: 6px;
-      background: #4dff91;
-      border-radius: 50%;
-      flex-shrink: 0;
-      animation: pulse-dot 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.8); }
-    }
-
-    .topbar-right {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .topbar-btn {
-      font-family: var(--font-ui);
-      font-size: 12px;
-      font-weight: 500;
-      color: rgba(255,255,255,0.7);
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: var(--radius-sm);
-      padding: 5px 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .topbar-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
-    .topbar-btn.primary { background: rgba(255,255,255,0.22); color: #fff; border-color: rgba(255,255,255,0.3); }
-    .topbar-btn.primary:hover { background: rgba(255,255,255,0.32); }
-
-    /* ── Sidebar ── */
-    .sidebar {
-      background: var(--white);
-      border-right: 1px solid var(--blue-mid);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .sidebar-section { padding: 20px 16px 12px; }
-
-    .sidebar-label {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      color: var(--text-light);
-      margin-bottom: 10px;
-    }
-
-    .repo-input-wrap {
-      position: relative;
-    }
-
-    .repo-input {
-      width: 100%;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      color: var(--text-main);
-      background: var(--blue-pale);
-      border: 1px solid var(--blue-mid);
-      border-radius: var(--radius-sm);
-      padding: 7px 8px 7px 28px;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .repo-input:focus {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(26,47,255,0.12);
-    }
-
-    .repo-input::placeholder { color: var(--text-light); }
-    .repo-error {
-      font-size: 11px;
-      color: #d83b3b;
-      margin-top: 6px;
-      min-height: 14px;
-    }
-
-    .repo-input-icon {
-      position: absolute;
-      left: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-light);
-      font-size: 12px;
-    }
-
-    .index-btn {
-      width: 100%;
-      margin-top: 8px;
-      font-family: var(--font-ui);
-      font-size: 12px;
-      font-weight: 600;
-      color: #fff;
-      background: var(--blue);
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 8px;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    .index-btn:hover { background: var(--blue-dark); }
-    .index-btn:active { transform: scale(0.98); }
-
-    .index-btn.loading { opacity: 0.7; cursor: not-allowed; }
-
-    .sidebar-divider { height: 1px; background: var(--blue-light); margin: 0 16px; }
-
-    .nav-section { padding: 14px 10px; flex: 1; overflow-y: auto; }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 10px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.15s;
-      margin-bottom: 2px;
-    }
-
-    .nav-item:hover { background: var(--blue-pale); color: var(--blue); }
-
-    .nav-item.active {
-      background: var(--blue-light);
-      color: var(--blue);
-    }
-
-    .nav-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: var(--radius-sm);
-      background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      flex-shrink: 0;
-      transition: background 0.15s;
-    }
-
-    .nav-item.active .nav-icon { background: rgba(26,47,255,0.12); }
-
-    .nav-item .nav-count {
-      margin-left: auto;
-      font-size: 10px;
-      font-weight: 600;
-      background: var(--blue-light);
-      color: var(--blue);
-      padding: 2px 7px;
-      border-radius: 10px;
-    }
-
-    .files-list { padding: 0 10px 14px; overflow-y: auto; }
-    .files-header {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      color: var(--text-light);
-      padding: 0 6px 8px;
-    }
-
-    .file-item {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 5px 6px;
-      border-radius: var(--radius-sm);
-      font-family: var(--font-mono);
-      font-size: 10px;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .file-item:hover { background: var(--blue-pale); color: var(--blue); }
-
-    .file-item.active { color: var(--blue); background: var(--blue-light); }
-
-    .file-dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: var(--gray-200);
-      flex-shrink: 0;
-    }
-
-    .file-item.active .file-dot { background: var(--blue); }
-
-    /* ── Main chat area ── */
-    .chat-area {
-      display: flex;
-      flex-direction: column;
-      background: var(--gray-50);
-      overflow: hidden;
-    }
-
-    .main-panel {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px;
-      display: none;
-    }
-
-    .main-panel.active-panel { display: block; }
-
-    .panel-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 14px;
-      color: var(--text-main);
-    }
-
-    .panel-card {
-      background: var(--white);
-      border: 1px solid var(--blue-light);
-      border-radius: var(--radius-md);
-      padding: 14px 16px;
-      margin-bottom: 12px;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .panel-empty {
-      color: var(--text-muted);
-      font-size: 13px;
-      background: var(--white);
-      border: 1px dashed var(--blue-mid);
-      border-radius: var(--radius-md);
-      padding: 16px;
-    }
-
-    .panel-btn {
-      font-family: var(--font-ui);
-      font-size: 12px;
-      font-weight: 600;
-      color: #fff;
-      background: var(--blue);
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-
-    .panel-btn:hover { background: var(--blue-dark); }
-
-    .panel-btn.danger { background: #d83b3b; }
-    .panel-btn.danger:hover { background: #bf2f2f; }
-
-    .mock-file-tree .file-item {
-      margin-bottom: 4px;
-      width: fit-content;
-      min-width: 180px;
-    }
-
-    .history-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-
-    .history-meta {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-      font-family: var(--font-mono);
-    }
-
-    .history-preview {
-      font-size: 13px;
-      color: var(--text-main);
-      margin-bottom: 10px;
-    }
-
-    .settings-grid {
-      display: grid;
-      gap: 14px;
-    }
-
-    .settings-section {
-      background: var(--white);
-      border: 1px solid var(--blue-light);
-      border-radius: var(--radius-md);
-      padding: 14px;
-    }
-
-    .settings-section h3 {
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-
-    .settings-row {
-      display: grid;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .settings-row label {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .settings-row input,
-    .settings-row select {
-      border: 1px solid var(--blue-mid);
-      border-radius: var(--radius-sm);
-      padding: 8px 10px;
-      font-size: 13px;
-      font-family: var(--font-ui);
-      background: var(--white);
-      color: var(--text-main);
-    }
-
-    #settings-save-msg {
-      color: #1a8a4a;
-      font-size: 12px;
-      font-weight: 600;
-      margin-left: 8px;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    #settings-save-msg.show { opacity: 1; }
-
-    .chat-header {
-      background: var(--white);
-      border-bottom: 1px solid var(--blue-light);
-      padding: 14px 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
-    }
-
-    .chat-header-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-main);
-    }
-
-    .chat-header-sub {
-      font-size: 11px;
-      color: var(--text-light);
-      font-family: var(--font-mono);
-    }
-
-    .chat-header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-
-    .status-pill {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 11px;
-      font-weight: 500;
-      color: #1a8a4a;
-      background: #e6f8ee;
-      border: 1px solid #b0e8c8;
-      padding: 3px 10px;
-      border-radius: 20px;
-    }
-
-    .status-dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: #1a8a4a;
-      animation: pulse-dot 2s ease-in-out infinite;
-    }
-
-    .clear-btn {
-      font-family: var(--font-ui);
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--text-muted);
-      background: var(--gray-100);
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-sm);
-      padding: 4px 10px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .clear-btn:hover { background: var(--gray-200); color: var(--text-main); }
-
-    /* ── Messages ── */
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      scroll-behavior: smooth;
-    }
-
-    .messages::-webkit-scrollbar { width: 4px; }
-    .messages::-webkit-scrollbar-track { background: transparent; }
-    .messages::-webkit-scrollbar-thumb { background: var(--blue-mid); border-radius: 4px; }
-
-    /* Welcome state */
-    .welcome {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 40px;
-      gap: 16px;
-      animation: fade-up 0.5s ease both;
-    }
-
-    @keyframes fade-up {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .welcome-icon {
-      width: 64px;
-      height: 64px;
-      background: var(--blue-light);
-      border-radius: var(--radius-lg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 4px;
-    }
-
-    .welcome-title {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--text-main);
-      letter-spacing: -0.02em;
-    }
-
-    .welcome-sub {
-      font-size: 14px;
-      color: var(--text-muted);
-      max-width: 340px;
-      line-height: 1.6;
-    }
-
-    .suggestions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-      margin-top: 8px;
-    }
-
-    .suggestion-chip {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--blue);
-      background: var(--blue-light);
-      border: 1px solid var(--blue-mid);
-      border-radius: 20px;
-      padding: 6px 14px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .suggestion-chip:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
-
-    /* Message bubbles */
-    .msg {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      animation: fade-up 0.3s ease both;
-    }
-
-    .msg.user { flex-direction: row-reverse; }
-
-    .avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .avatar.ai {
-      background: var(--blue);
-      color: #fff;
-    }
-
-    .avatar.user {
-      background: var(--gray-800);
-      color: #fff;
-    }
-
-    .bubble {
-      max-width: 72%;
-      padding: 12px 16px;
-      border-radius: var(--radius-lg);
-      font-size: 13px;
-      line-height: 1.65;
-      position: relative;
-    }
-
-    .bubble.ai {
-      background: var(--white);
-      border: 1px solid var(--blue-mid);
-      color: var(--text-main);
-      border-radius: 4px var(--radius-lg) var(--radius-lg) var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .bubble.user {
-      background: var(--blue);
-      color: #fff;
-      border-radius: var(--radius-lg) 4px var(--radius-lg) var(--radius-lg);
-    }
-
-    .bubble-tag {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      color: var(--blue);
-      margin-bottom: 5px;
-    }
-
-    .bubble code {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      background: var(--blue-light);
-      color: var(--blue-dark);
-      padding: 1px 5px;
-      border-radius: 3px;
-    }
-
-    .bubble.user code {
-      background: rgba(255,255,255,0.2);
-      color: #fff;
-    }
-
-    .bubble pre {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      background: var(--blue-pale);
-      border: 1px solid var(--blue-mid);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-      margin-top: 8px;
-      overflow-x: auto;
-      color: var(--text-main);
-      line-height: 1.7;
-    }
-
-    .msg-time {
-      font-size: 10px;
-      color: var(--text-light);
-      margin-top: 4px;
-      padding: 0 4px;
-    }
-
-    .msg.user .msg-time { text-align: right; }
-
-    /* Typing indicator */
-    .typing-indicator {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .typing-bubble {
-      background: var(--white);
-      border: 1px solid var(--blue-mid);
-      border-radius: 4px var(--radius-lg) var(--radius-lg) var(--radius-lg);
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .typing-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--blue);
-      animation: typing-bounce 1.2s ease-in-out infinite;
-    }
-
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes typing-bounce {
-      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-      30% { transform: translateY(-5px); opacity: 1; }
-    }
-
-    /* ── Input bar ── */
-    .input-bar {
-      background: var(--white);
-      border-top: 1px solid var(--blue-light);
-      padding: 16px 24px;
-      flex-shrink: 0;
-    }
-
-    .input-wrap {
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-      background: var(--gray-50);
-      border: 1.5px solid var(--blue-mid);
-      border-radius: var(--radius-xl);
-      padding: 10px 12px 10px 18px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .input-wrap:focus-within {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 4px rgba(26,47,255,0.1);
-    }
-
-    #msg-input {
-      flex: 1;
-      font-family: var(--font-ui);
-      font-size: 13px;
-      color: var(--text-main);
-      background: transparent;
-      border: none;
-      outline: none;
-      resize: none;
-      line-height: 1.5;
-      max-height: 120px;
-      min-height: 20px;
-    }
-
-    #msg-input::placeholder { color: var(--text-light); }
-
-    .input-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-
-    .send-btn {
-      width: 36px;
-      height: 36px;
-      background: var(--blue);
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-      flex-shrink: 0;
-    }
-
-    .send-btn:hover { background: var(--blue-dark); box-shadow: var(--shadow-md); }
-    .send-btn:active { transform: scale(0.93); }
-    .send-btn:disabled { background: var(--gray-200); cursor: not-allowed; }
-
-    .input-hint {
-      font-size: 11px;
-      color: var(--text-light);
-      text-align: center;
-      margin-top: 8px;
-      font-family: var(--font-mono);
-    }
-
-    .input-hint kbd {
-      background: var(--gray-100);
-      border: 1px solid var(--gray-200);
-      border-radius: 3px;
-      padding: 1px 5px;
-      font-size: 10px;
-      color: var(--text-muted);
-    }
-
-    /* Repo indexing overlay */
-    .indexing-bar {
-      background: var(--blue-light);
-      border-bottom: 1px solid var(--blue-mid);
-      padding: 8px 24px;
-      display: none;
-      align-items: center;
-      gap: 10px;
-      font-size: 12px;
-      color: var(--blue-dark);
-      font-weight: 500;
-    }
-
-    .indexing-bar.show { display: flex; }
-
-    .progress-track {
-      flex: 1;
-      height: 3px;
-      background: var(--blue-mid);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: var(--blue);
-      border-radius: 2px;
-      width: 0%;
-      transition: width 0.4s ease;
-    }
-
-    /* Toast */
-    .toast-wrap {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 100;
-    }
-
-    .toast {
-      background: var(--white);
-      color: var(--text-main);
-      font-size: 12px;
-      padding: 10px 16px;
-      border-radius: 999px;
-      box-shadow: var(--shadow-lg);
-      border-left: 4px solid #3b82f6;
-      opacity: 0;
-      transform: translateY(12px);
-      transition: opacity 0.25s ease, transform 0.25s ease;
-      min-width: 220px;
-      font-weight: 600;
-    }
-
-    .toast.show { opacity: 1; transform: translateY(0); }
-    .toast.fade-out { opacity: 0; transform: translateY(10px); }
-    .toast.success { border-left-color: #1a8a4a; }
-    .toast.error { border-left-color: #d83b3b; }
-    .toast.info { border-left-color: #2f6ed8; }
-
-    body.light-mode {
-      background: #f6f8ff;
-      color: var(--text-main);
-    }
-
-    body.font-small { font-size: 13px; }
-    body.font-medium { font-size: 14px; }
-    body.font-large { font-size: 16px; }
-
-    /* Scrollbar for sidebar */
-    .nav-section::-webkit-scrollbar,
-    .files-list::-webkit-scrollbar { width: 3px; }
-    .nav-section::-webkit-scrollbar-thumb,
-    .files-list::-webkit-scrollbar-thumb { background: var(--blue-mid); border-radius: 3px; }
-  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"/>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='sca-premium.css') }}"/>
 </head>
-<body>
+<body class="theme-dark">
 
 <div class="app">
 
-  <!-- ── Top bar ── -->
-  <header class="topbar">
+  <header class="topbar gradient-header">
     <div class="topbar-logo">
       <div class="logo-icon">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -906,99 +31,86 @@
       <span id="repo-name-display">no repo indexed</span>
     </div>
     <div class="topbar-right">
-      <button class="topbar-btn" onclick="clearChat()">Clear chat</button>
-      <button class="topbar-btn primary" onclick="saveSession()">Save session</button>
+      <button type="button" class="topbar-btn" onclick="clearChat()">Clear chat</button>
+      <button type="button" class="topbar-btn primary" onclick="saveSession()">Save session</button>
     </div>
   </header>
 
-  <!-- ── Sidebar ── -->
-  <aside class="sidebar">
+  <aside class="panel-left">
+    <div class="panel-left-inner">
+      <section class="glass-card section-card">
+        <div class="sidebar-label">INDEX REPOSITORY</div>
+        <div class="repo-input-wrap">
+          <span class="repo-input-icon">⌥</span>
+          <input class="repo-input" id="repo-url" type="text" placeholder="https://github.com/user/repo" value="" />
+        </div>
+        <div class="repo-error" id="repo-error"></div>
+        <button type="button" class="index-btn" id="index-btn" onclick="handleIndex()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <circle cx="6" cy="6" r="5" stroke="white" stroke-width="1.5"/>
+            <path d="M4 6l2 2 3-3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Index Repository
+        </button>
+      </section>
 
-    <!-- Repo indexer -->
-    <div class="sidebar-section">
-      <div class="sidebar-label">INDEX REPOSITORY</div>
-      <div class="repo-input-wrap">
-        <span class="repo-input-icon">⌥</span>
-        <input
-          class="repo-input"
-          id="repo-url"
-          type="text"
-          placeholder="github.com/user/repo"
-          value=""
-        />
-      </div>
-      <div class="repo-error" id="repo-error"></div>
-      <button class="index-btn" id="index-btn" onclick="handleIndex()">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <circle cx="6" cy="6" r="5" stroke="white" stroke-width="1.5"/>
-          <path d="M4 6l2 2 3-3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Index Repository
-      </button>
+      <nav class="glass-card section-card nav-section">
+        <div class="sidebar-label" style="margin-bottom:8px;">WORKSPACE</div>
+        <div class="nav-item active" data-tab="chat" onclick="setNav(this)">
+          <div class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 11l3-3 2.5 2.5 4-5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          Chat
+          <span class="nav-count" id="msg-count">0</span>
+        </div>
+        <div class="nav-item" data-tab="files" onclick="setNav(this)">
+          <div class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M4 5h6M4 7h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          Files
+        </div>
+        <div class="nav-item" data-tab="history" onclick="setNav(this)">
+          <div class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M7 4.5V7l1.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          History
+          <span class="nav-count" id="history-count">0</span>
+        </div>
+        <div class="nav-item" data-tab="settings" onclick="setNav(this)">
+          <div class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          Settings
+        </div>
+      </nav>
+
+      <section class="glass-card section-card flex-grow file-browser">
+        <div class="sidebar-label">REPOSITORY FILES</div>
+        <div class="tree-search-wrap">
+          <span class="tree-search-icon">⌕</span>
+          <input type="search" id="sidebar-file-search" class="tree-search" placeholder="Search files…" autocomplete="off" />
+        </div>
+        <div class="file-tree-scroll">
+          <div id="file-items">
+            <div style="font-size:11px;color:var(--text-dim);padding:8px 6px;font-family:var(--font-mono);">— no files yet —</div>
+          </div>
+        </div>
+      </section>
     </div>
-
-    <div class="sidebar-divider"></div>
-
-    <!-- Nav -->
-    <div class="nav-section">
-      <div class="sidebar-label" style="padding: 0 6px 10px;">NAVIGATION</div>
-      <div class="nav-item active" data-tab="chat" onclick="setNav(this)">
-        <div class="nav-icon">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M2 11l3-3 2.5 2.5 4-5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        Chat
-        <span class="nav-count" id="msg-count">0</span>
-      </div>
-      <div class="nav-item" data-tab="files" onclick="setNav(this)">
-        <div class="nav-icon">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <rect x="2" y="2" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M4 5h6M4 7h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-          </svg>
-        </div>
-        Files
-      </div>
-      <div class="nav-item" data-tab="history" onclick="setNav(this)">
-        <div class="nav-icon">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M7 4.5V7l1.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        History
-        <span class="nav-count" id="history-count">0</span>
-      </div>
-      <div class="nav-item" data-tab="settings" onclick="setNav(this)">
-        <div class="nav-icon">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-          </svg>
-        </div>
-        Settings
-      </div>
-    </div>
-
-    <div class="sidebar-divider"></div>
-
-    <!-- File list -->
-    <div class="files-list" id="files-list" style="padding-top:14px;">
-      <div class="files-header">INDEXED FILES</div>
-      <div id="file-items">
-        <div style="font-size:11px; color:var(--text-light); padding:6px 6px; font-family:var(--font-mono);">
-          — no files yet —
-        </div>
-      </div>
-    </div>
-
   </aside>
 
-  <!-- ── Chat area ── -->
-  <main class="chat-area">
-
-    <!-- Indexing progress bar -->
+  <main class="panel-center">
     <div class="indexing-bar" id="indexing-bar">
       <span id="indexing-label">Indexing repository...</span>
       <div class="progress-track">
@@ -1007,7 +119,6 @@
       <span id="progress-pct" style="font-family:var(--font-mono);font-size:11px;">0%</span>
     </div>
 
-    <!-- Chat header -->
     <div class="chat-header">
       <div>
         <div class="chat-header-title">Code Analysis Chat</div>
@@ -1018,136 +129,207 @@
           <div class="status-dot"></div>
           Ready
         </div>
-        <button class="clear-btn" onclick="clearChat()">Clear</button>
+        <button type="button" class="clear-btn" onclick="clearChat()">Clear</button>
       </div>
     </div>
 
-    <!-- Messages -->
-    <div class="messages" id="messages">
-      <!-- Welcome -->
-      <div class="welcome" id="welcome-screen">
-        <div class="welcome-icon">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <rect x="3" y="3" width="10" height="10" rx="2" fill="#1a2fff" opacity="0.8"/>
-            <rect x="15" y="3" width="10" height="10" rx="2" fill="#1a2fff" opacity="0.45"/>
-            <rect x="3" y="15" width="10" height="10" rx="2" fill="#1a2fff" opacity="0.45"/>
-            <rect x="15" y="15" width="10" height="10" rx="2" fill="#1a2fff" opacity="0.2"/>
-          </svg>
+    <section id="code-workspace" class="code-workspace glass-card" hidden>
+      <div class="code-workspace-head">
+        <div class="code-workspace-title-wrap">
+          <div class="sidebar-label">ACTIVE FILE</div>
+          <div id="active-file-name" class="active-file-name">No file selected</div>
         </div>
-        <div class="welcome-title">Source Code Analyzer</div>
-        <div class="welcome-sub">Index a GitHub repo on the left, then ask anything about its architecture, functions, or logic.</div>
-        <div class="suggestions">
-          <div class="suggestion-chip" onclick="useSuggestion(this)">What does app.py do?</div>
-          <div class="suggestion-chip" onclick="useSuggestion(this)">Explain the RAG pipeline</div>
-          <div class="suggestion-chip" onclick="useSuggestion(this)">How are embeddings stored?</div>
-          <div class="suggestion-chip" onclick="useSuggestion(this)">List all helper functions</div>
-          <div class="suggestion-chip" onclick="useSuggestion(this)">What is the entry point?</div>
+        <div class="code-action-pills">
+          <button type="button" class="code-action-pill" data-ai-action="explain">Explain</button>
+          <button type="button" class="code-action-pill" data-ai-action="optimize">Optimize</button>
+          <button type="button" class="code-action-pill" data-ai-action="find-bugs">Find Bugs</button>
+        </div>
+      </div>
+      <div id="code-selection-badge" class="code-selection-badge">Using full file</div>
+      <pre id="file-code-viewer" class="file-code-viewer"><code id="file-code-content" class="language-python"></code></pre>
+    </section>
+
+    <div class="center-panels">
+      <div class="messages" id="messages">
+        <div class="welcome" id="welcome-screen">
+          <div class="welcome-icon">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect x="3" y="3" width="10" height="10" rx="2" fill="url(#wg)" opacity="0.95"/>
+              <rect x="15" y="3" width="10" height="10" rx="2" fill="url(#wg)" opacity="0.55"/>
+              <rect x="3" y="15" width="10" height="10" rx="2" fill="url(#wg)" opacity="0.55"/>
+              <rect x="15" y="15" width="10" height="10" rx="2" fill="url(#wg)" opacity="0.25"/>
+              <defs>
+                <linearGradient id="wg" x1="3" y1="3" x2="23" y2="23" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#a78bfa"/><stop offset="1" stop-color="#2563eb"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="welcome-title">AI Source Analysis</div>
+          <div class="welcome-sub">Index a GitHub repository, explore files on the left, and ask deep questions about architecture, logic, and dependencies.</div>
+          <div class="suggestions">
+            <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">What does app.py do?</button>
+            <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">Explain the RAG pipeline</button>
+            <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">How are embeddings stored?</button>
+            <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">List all helper functions</button>
+            <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">What is the entry point?</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-panel" id="panel-files">
+        <div class="panel-title">Indexed Files</div>
+        <div id="files-panel-content"></div>
+      </div>
+
+      <div class="main-panel" id="panel-history">
+        <div class="panel-title">Chat History</div>
+        <div class="history-actions">
+          <button type="button" class="panel-btn danger" onclick="clearHistory()">Clear History</button>
+        </div>
+        <div id="history-panel-content"></div>
+      </div>
+
+      <div class="main-panel" id="panel-settings">
+        <div class="panel-title">Settings</div>
+        <div class="settings-grid">
+          <div class="glass-card settings-section">
+            <h3>A) API Configuration</h3>
+            <div class="settings-row">
+              <label for="setting-groq-key">Groq API Key</label>
+              <input id="setting-groq-key" type="password" placeholder="Enter Groq API key"/>
+            </div>
+            <div class="settings-row">
+              <label for="setting-model">Model</label>
+              <select id="setting-model">
+                <option value="llama-3.1-70b-versatile">llama-3.1-70b-versatile</option>
+                <option value="llama-3.1-8b-instant">llama-3.1-8b-instant</option>
+                <option value="mixtral-8x7b">mixtral-8x7b</option>
+              </select>
+            </div>
+          </div>
+          <div class="glass-card settings-section">
+            <h3>B) RAG Settings</h3>
+            <div class="settings-row">
+              <label for="setting-chunk-size">Chunk size</label>
+              <input id="setting-chunk-size" type="number" min="1" value="1000"/>
+            </div>
+            <div class="settings-row">
+              <label for="setting-chunk-overlap">Chunk overlap</label>
+              <input id="setting-chunk-overlap" type="number" min="0" value="200"/>
+            </div>
+            <div class="settings-row">
+              <label for="setting-top-k">Top-K results</label>
+              <input id="setting-top-k" type="number" min="1" value="4"/>
+            </div>
+          </div>
+          <div class="glass-card settings-section">
+            <h3>C) Appearance</h3>
+            <div class="settings-row">
+              <label for="setting-theme">Theme</label>
+              <select id="setting-theme">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <label for="setting-font-size">Font size</label>
+              <select id="setting-font-size">
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </div>
+          </div>
+          <div class="glass-card settings-section">
+            <button type="button" class="panel-btn" onclick="saveSettings()">Save</button>
+            <span id="settings-save-msg">✓ Saved!</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Files panel -->
-    <div class="main-panel" id="panel-files">
-      <div class="panel-title">Indexed Files</div>
-      <div id="files-panel-content"></div>
-    </div>
-
-    <!-- History panel -->
-    <div class="main-panel" id="panel-history">
-      <div class="panel-title">Chat History</div>
-      <div class="history-actions">
-        <div></div>
-        <button class="panel-btn danger" onclick="clearHistory()">Clear History</button>
-      </div>
-      <div id="history-panel-content"></div>
-    </div>
-
-    <!-- Settings panel -->
-    <div class="main-panel" id="panel-settings">
-      <div class="panel-title">Settings</div>
-      <div class="settings-grid">
-        <div class="settings-section">
-          <h3>A) API Configuration</h3>
-          <div class="settings-row">
-            <label for="setting-groq-key">Groq API Key</label>
-            <input id="setting-groq-key" type="password" placeholder="Enter Groq API key"/>
-          </div>
-          <div class="settings-row">
-            <label for="setting-model">Model</label>
-            <select id="setting-model">
-              <option value="llama-3.1-70b-versatile">llama-3.1-70b-versatile</option>
-              <option value="llama-3.1-8b-instant">llama-3.1-8b-instant</option>
-              <option value="mixtral-8x7b">mixtral-8x7b</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <h3>B) RAG Settings</h3>
-          <div class="settings-row">
-            <label for="setting-chunk-size">Chunk size</label>
-            <input id="setting-chunk-size" type="number" min="1" value="1000"/>
-          </div>
-          <div class="settings-row">
-            <label for="setting-chunk-overlap">Chunk overlap</label>
-            <input id="setting-chunk-overlap" type="number" min="0" value="200"/>
-          </div>
-          <div class="settings-row">
-            <label for="setting-top-k">Top-K results</label>
-            <input id="setting-top-k" type="number" min="1" value="4"/>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <h3>C) Appearance</h3>
-          <div class="settings-row">
-            <label for="setting-theme">Theme</label>
-            <select id="setting-theme">
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-            </select>
-          </div>
-          <div class="settings-row">
-            <label for="setting-font-size">Font size</label>
-            <select id="setting-font-size">
-              <option value="small">Small</option>
-              <option value="medium">Medium</option>
-              <option value="large">Large</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <button class="panel-btn" onclick="saveSettings()">Save</button>
-          <span id="settings-save-msg">✓ Saved!</span>
+    <div id="sticky-chat-footer" class="sticky-chat-footer">
+      <div class="prompt-strip">
+        <span class="prompt-strip-label">SUGGESTED</span>
+        <div id="prompt-chips" class="prompt-chips">
+          <button type="button" class="prompt-chip" data-prompt="Summarize the repository architecture in 5 bullets.">Architecture overview</button>
+          <button type="button" class="prompt-chip" data-prompt="Where is the main entry point and how does request flow work?">Trace request flow</button>
+          <button type="button" class="prompt-chip" data-prompt="What are the main classes and their responsibilities?">Key classes</button>
+          <button type="button" class="prompt-chip" data-prompt="Find potential bugs or risky patterns in this codebase.">Risk scan</button>
         </div>
       </div>
-    </div>
-
-    <!-- Input -->
-    <div class="input-bar">
-      <div class="input-wrap">
-        <textarea
-          id="msg-input"
-          rows="1"
-          placeholder="Ask about any function, class, or file..."
-        ></textarea>
+      <div class="input-bar">
+        <textarea id="msg-input" rows="1" placeholder="Ask about any function, class, or file…"></textarea>
         <div class="input-actions">
-          <button class="send-btn" id="send-btn" onclick="sendMessage()">
+          <button type="button" class="send-btn" id="send-btn" onclick="sendMessage()" aria-label="Send">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M7 11.5V2.5M7 2.5L3 6.5M7 2.5L11 6.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
         </div>
       </div>
-      <div class="input-hint"><kbd>Enter</kbd> to send &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for new line</div>
+      <div class="input-hint"><kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> new line</div>
     </div>
-
   </main>
-</div>
 
+  <aside class="panel-right" id="insights-aside">
+    <div class="insights-top">
+      <div class="insights-title">AI Insights</div>
+      <p class="insights-sub" id="insights-file-label">Select a file from the tree</p>
+    </div>
+    <div class="insights-scroll" id="insights-scroll">
+      <div id="insights-empty" class="insights-placeholder glass-card">
+        Click a file to view summary, heuristic complexity, risk patterns, and related paths — then refine in chat.
+      </div>
+      <div id="insights-content" class="insights-content" hidden>
+        <section class="insight-section glass-card">
+          <h3 class="insight-h">File summary</h3>
+          <p class="insight-text" id="insight-summary"></p>
+        </section>
+        <section class="insight-section glass-card">
+          <h3 class="insight-h">Complexity</h3>
+          <div class="complexity-row">
+            <span id="insight-complexity-label" class="complexity-badge">—</span>
+            <span id="insight-complexity-score" class="complexity-score">0</span>
+          </div>
+          <div class="progress-track complexity-bar"><div class="progress-fill" id="insight-complexity-bar"></div></div>
+        </section>
+        <section class="insight-section glass-card">
+          <h3 class="insight-h">Bugs &amp; risks</h3>
+          <div class="bug-list" id="insight-bugs"></div>
+        </section>
+        <section class="insight-section glass-card">
+          <h3 class="insight-h">Suggestions</h3>
+          <ul class="suggest-list" id="insight-suggestions"></ul>
+        </section>
+        <section class="insight-section glass-card">
+          <div class="insight-head-row">
+            <h3 class="insight-h">Action Output</h3>
+            <div class="insight-head-actions">
+              <button type="button" id="insight-copy-btn" class="mini-ghost-btn">Copy</button>
+              <button type="button" id="insight-regenerate-btn" class="mini-ghost-btn">Regenerate</button>
+            </div>
+          </div>
+          <div id="insight-action-output" class="insight-action-output">Run an action from file pills or context menu to view output here.</div>
+        </section>
+        <section class="insight-section glass-card">
+          <h3 class="insight-h">Dependencies</h3>
+          <div class="dep-graph" id="insight-deps"></div>
+        </section>
+      </div>
+    </div>
+  </aside>
+
+</div>
 <!-- Toast -->
 <div class="toast-wrap" id="toast-wrap"></div>
+<div id="code-context-menu" class="code-context-menu" hidden>
+  <button type="button" class="context-item" data-menu-action="explain">Explain this function</button>
+  <button type="button" class="context-item" data-menu-action="convert">Convert to another language</button>
+  <button type="button" class="context-item" data-menu-action="optimize">Optimize code</button>
+  <button type="button" class="context-item" data-menu-action="comment">Add comments</button>
+</div>
 
 <script>
   const messagesEl = document.getElementById('messages');
@@ -1167,7 +349,16 @@
   const filesPanelContent = document.getElementById('files-panel-content');
   const historyPanelContent = document.getElementById('history-panel-content');
   const toastWrap = document.getElementById('toast-wrap');
-  const inputBar = document.querySelector('.input-bar');
+  const stickyChatFooter = document.getElementById('sticky-chat-footer');
+  const codeWorkspace = document.getElementById('code-workspace');
+  const activeFileNameEl = document.getElementById('active-file-name');
+  const fileCodeViewer = document.getElementById('file-code-viewer');
+  const fileCodeContent = document.getElementById('file-code-content');
+  const codeSelectionBadge = document.getElementById('code-selection-badge');
+  const contextMenuEl = document.getElementById('code-context-menu');
+  const insightActionOutputEl = document.getElementById('insight-action-output');
+  const insightCopyBtn = document.getElementById('insight-copy-btn');
+  const insightRegenerateBtn = document.getElementById('insight-regenerate-btn');
   const navItems = document.querySelectorAll('.nav-item');
   const panels = {
     chat: document.getElementById('messages'),
@@ -1176,10 +367,26 @@
     settings: document.getElementById('panel-settings')
   };
 
-  const MOCK_FILES = ['app.py', 'ingest.py', 'vectorstore.py', 'templates/', 'static/'];
+  const DEFAULT_FILE_LIST = ['app.py', 'ingest.py', 'vectorstore.py', 'templates/', 'static/'];
   let msgCount = 0;
   let isLoading = false;
   let chatMessages = [];
+  let indexedFiles = JSON.parse(localStorage.getItem('sca_indexed_files') || '[]');
+  let filesFilterType = 'all';
+  let filesSearchQuery = '';
+  let sidebarSearchQuery = '';
+  let activeFilePath = null;
+  let activeFileContent = '';
+  let lastActionPayload = null;
+
+  const insightsFileLabel = document.getElementById('insights-file-label');
+  const insightsEmptyEl = document.getElementById('insights-empty');
+  const insightsContentEl = document.getElementById('insights-content');
+
+  // === LIVE CHAT PERSISTENCE ===
+  function persistCurrentChat() {
+    localStorage.setItem('sca_current_chat', JSON.stringify(chatMessages));
+  }
 
   // === CHAT INPUT ===
   inputEl.addEventListener('input', () => {
@@ -1192,6 +399,19 @@
       e.preventDefault();
       sendMessage();
     }
+  });
+
+  messagesEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.code-copy');
+    if (!btn) return;
+    e.preventDefault();
+    const wrap = btn.closest('.code-block-wrap');
+    const code = wrap && wrap.querySelector('code');
+    if (!code) return;
+    navigator.clipboard.writeText(code.innerText).then(
+      () => showToast('Copied', 'success'),
+      () => showToast('Copy failed', 'error')
+    );
   });
 
   // === NAV SWITCHING ===
@@ -1209,7 +429,7 @@
         panels[key].classList.toggle('active-panel', tab === key);
       }
     });
-    inputBar.style.display = tab === 'chat' ? 'block' : 'none';
+    if (stickyChatFooter) stickyChatFooter.style.display = tab === 'chat' ? 'block' : 'none';
     localStorage.setItem('sca_active_tab', tab);
 
     if (tab === 'files') renderFilesPanel();
@@ -1270,6 +490,7 @@
     }
 
     bubble.insertAdjacentHTML('beforeend', renderText(text));
+    highlightCodeIn(bubble);
 
     const time = document.createElement('div');
     time.className = 'msg-time';
@@ -1285,16 +506,198 @@
     chatMessages.push({ role, text, time: now });
     msgCount += 1;
     msgCountEl.textContent = String(msgCount);
+    persistCurrentChat();
     scrollToBottom();
   }
 
-  function renderText(text) {
-    let s = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    s = s.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
-    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
-    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    s = s.replace(/\n/g, '<br>');
-    return s;
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function escapeAttr(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function formatInlineSegment(s) {
+    if (!s) return '';
+    let t = escapeHtml(s);
+    t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+    t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    t = t.replace(/\n/g, '<br>');
+    return t;
+  }
+
+  function renderText(raw) {
+    const re = /```(\w*)\s*\n?([\s\S]*?)```/g;
+    let html = '';
+    let last = 0;
+    let m;
+    while ((m = re.exec(raw)) !== null) {
+      html += formatInlineSegment(raw.slice(last, m.index));
+      let lang = (m[1] || '').trim().toLowerCase() || 'plaintext';
+      if (typeof hljs !== 'undefined' && hljs.getLanguage && !hljs.getLanguage(lang)) lang = 'plaintext';
+      const code = escapeHtml(m[2].replace(/\n$/, ''));
+      html +=
+        '<div class="code-block-wrap"><div class="code-block-toolbar"><span class="code-lang">' +
+        lang +
+        '</span><button type="button" class="code-copy">Copy</button></div>' +
+        '<pre class="hljs-pre"><code class="language-' +
+        lang +
+        '">' +
+        code +
+        '</code></pre></div>';
+      last = m.index + m[0].length;
+    }
+    html += formatInlineSegment(raw.slice(last));
+    return html;
+  }
+
+  function highlightCodeIn(container) {
+    if (typeof hljs === 'undefined') return;
+    container.querySelectorAll('pre code').forEach((block) => {
+      try {
+        hljs.highlightElement(block);
+      } catch (_) {}
+    });
+  }
+
+  function getSelectionFromCodeViewer() {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return '';
+    const range = sel.getRangeAt(0);
+    if (!fileCodeViewer || !fileCodeViewer.contains(range.commonAncestorContainer)) return '';
+    return sel.toString().trim();
+  }
+
+  function updateSelectionBadge() {
+    const selected = getSelectionFromCodeViewer();
+    if (!codeSelectionBadge) return;
+    if (selected) {
+      codeSelectionBadge.textContent = `Selected ${selected.length} chars`;
+      codeSelectionBadge.classList.add('has-selection');
+    } else {
+      codeSelectionBadge.textContent = 'Using full file';
+      codeSelectionBadge.classList.remove('has-selection');
+    }
+  }
+
+  function mapFileLang(path) {
+    const t = getFileType(path || '');
+    if (t === 'javascript') return 'javascript';
+    if (t === 'styles') return 'css';
+    if (t === 'html') return 'html';
+    if (t === 'python') return 'python';
+    return 'plaintext';
+  }
+
+  function renderFileViewer(path, content) {
+    if (!codeWorkspace || !fileCodeContent) return;
+    codeWorkspace.hidden = false;
+    if (activeFileNameEl) activeFileNameEl.textContent = path || 'No file selected';
+    const lang = mapFileLang(path);
+    fileCodeContent.className = `language-${lang}`;
+    fileCodeContent.textContent = content || '// No content available';
+    if (typeof hljs !== 'undefined') {
+      try {
+        hljs.highlightElement(fileCodeContent);
+      } catch (_) {}
+    }
+    updateSelectionBadge();
+  }
+
+  function setInsightActionOutput(text, opts = {}) {
+    if (!insightActionOutputEl) return;
+    const { loading = false } = opts;
+    if (loading) {
+      insightActionOutputEl.innerHTML = '<div class="action-loading"><span class="spinner"></span> Running AI action...</div>';
+      return;
+    }
+    insightActionOutputEl.innerHTML = renderText(text || 'No output');
+    highlightCodeIn(insightActionOutputEl);
+  }
+
+  function buildActionPayload(actionName) {
+    const selected = getSelectionFromCodeViewer();
+    const payload = new URLSearchParams();
+    payload.set('file_path', activeFilePath || '');
+    payload.set('file_content', activeFileContent || '');
+    if (selected) payload.set('selected_code', selected);
+    if (actionName === 'convert') {
+      const target = prompt('Convert to which language?', 'javascript');
+      if (!target) return null;
+      payload.set('target_language', target.trim());
+    }
+    return { payload, usedSelection: Boolean(selected) };
+  }
+
+  function endpointForAction(actionName) {
+    if (actionName === 'find-bugs') return '/find-bugs';
+    return '/' + actionName;
+  }
+
+  async function runCodeAction(actionName) {
+    if (!activeFilePath) {
+      showToast('Select a file first', 'info');
+      return;
+    }
+    const built = buildActionPayload(actionName);
+    if (!built) return;
+    const { payload, usedSelection } = built;
+    setInsightActionOutput('', { loading: true });
+    hideContextMenu();
+    document.body.classList.add('ai-busy');
+
+    try {
+      const res = await fetch(endpointForAction(actionName), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: payload.toString()
+      });
+      const data = await res.json();
+      if (!res.ok || data.status !== 'ok') throw new Error(data.message || 'Action failed');
+      const scopeLabel = usedSelection ? 'selected code' : 'full file';
+      const title = `### ${actionName.replace('-', ' ').toUpperCase()} · ${activeFilePath}\nUsing: ${scopeLabel}\n\n`;
+      const resultText = title + (data.result || '');
+      setInsightActionOutput(resultText);
+      appendMessage('ai', resultText);
+      lastActionPayload = { actionName, payload: payload.toString() };
+      showToast(`${actionName} completed`, 'success');
+    } catch (err) {
+      setInsightActionOutput(`Action failed: ${err.message || err}`);
+      showToast(err.message || 'Action failed', 'error');
+    } finally {
+      document.body.classList.remove('ai-busy');
+    }
+  }
+
+  async function fetchFileContent(path) {
+    const payload = new URLSearchParams();
+    payload.set('file_path', path);
+    const res = await fetch('/file-content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: payload.toString()
+    });
+    const data = await res.json();
+    if (!res.ok || data.status !== 'ok') throw new Error(data.message || 'Could not load file');
+    return data.content || '';
+  }
+
+  function showContextMenu(x, y) {
+    if (!contextMenuEl) return;
+    contextMenuEl.hidden = false;
+    contextMenuEl.style.left = `${x}px`;
+    contextMenuEl.style.top = `${y}px`;
+  }
+
+  function hideContextMenu() {
+    if (!contextMenuEl) return;
+    contextMenuEl.hidden = true;
   }
 
   function showTyping() {
@@ -1331,7 +734,7 @@
   }
 
   function useSuggestion(el) {
-    inputEl.value = el.textContent;
+    inputEl.value = el.textContent.trim();
     inputEl.focus();
     sendMessage();
   }
@@ -1343,6 +746,7 @@
     chatMessages = [];
     msgCount = 0;
     msgCountEl.textContent = '0';
+    persistCurrentChat();
     if (welcomeEl) welcomeEl.style.display = 'flex';
     showToast('Chat cleared', 'info');
   }
@@ -1353,32 +757,233 @@
     return cleaned.split('/').pop() || cleaned;
   }
 
+  function getFileType(path) {
+    if (path.endsWith('/')) return 'folder';
+    const ext = path.includes('.') ? path.split('.').pop().toLowerCase() : '';
+    if (ext === 'py') return 'python';
+    if (ext === 'js') return 'javascript';
+    if (ext === 'css') return 'styles';
+    if (ext === 'html') return 'html';
+    if (ext === 'md') return 'docs';
+    return 'other';
+  }
+
+  function hashStr(s) {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+    return h >>> 0;
+  }
+
+  function fileIconForPath(p) {
+    const t = getFileType(p);
+    if (t === 'folder') return '📁';
+    if (t === 'python') return '🐍';
+    if (t === 'javascript') return 'JS';
+    if (t === 'html') return '◻';
+    if (t === 'styles') return 'CSS';
+    if (t === 'docs') return 'MD';
+    return '•';
+  }
+
+  function relatedPathsForFile(path) {
+    const all = indexedFiles.length ? indexedFiles : DEFAULT_FILE_LIST;
+    const others = all.filter((p) => p !== path);
+    const parts = path.split('/');
+    const parent = parts.slice(0, -1).join('/');
+    const siblings = others.filter((p) => {
+      const q = p.split('/');
+      if (q.length !== parts.length) return false;
+      return q.slice(0, -1).join('/') === parent;
+    });
+    return (siblings.length ? siblings : others).slice(0, 8);
+  }
+
+  function bugSevLabelClass(sev) {
+    if (sev === 'high') return 'critical';
+    if (sev === 'medium') return 'warning';
+    return 'info';
+  }
+
+  function updateInsightsPanel(path) {
+    if (!path || !insightsFileLabel) return;
+    const h = hashStr(path);
+    const score = 18 + (h % 72);
+    const level = score < 40 ? 'Low' : score < 62 ? 'Medium' : 'High';
+    const type = getFileType(path);
+    const base = path.split('/').pop() || path;
+
+    const summaryByType = {
+      folder: `Directory <strong>${path}</strong> — likely groups related modules; open specific files for detailed analysis.`,
+      python: `Python module <strong>${base}</strong> — typically defines functions, classes, or CLI entry logic for this part of the repo.`,
+      javascript: `JavaScript asset <strong>${base}</strong> — may contain UI logic, bundling hooks, or client-side behavior.`,
+      html: `HTML template <strong>${base}</strong> — structure and markup for pages or fragments served by the app.`,
+      styles: `Stylesheet <strong>${base}</strong> — layout, theme tokens, and component styling.`,
+      docs: `Documentation <strong>${base}</strong> — human-readable notes, API references, or onboarding.`,
+      other: `Source file <strong>${base}</strong> — part of the indexed codebase; ask the chat for line-level detail.`
+    };
+
+    const bugs = [];
+    const low = (path + base).toLowerCase();
+    if (/test|spec|mock/.test(low)) bugs.push({ sev: 'info', text: 'Test or mock file — failures may be expected in CI.' });
+    if (/deprecated|legacy|old/.test(low)) bugs.push({ sev: 'medium', text: 'Naming suggests legacy code — verify behavior before refactors.' });
+    if (/password|secret|token|api_key/.test(low)) bugs.push({ sev: 'high', text: 'Path suggests secrets — ensure nothing sensitive is committed.' });
+    if (type === 'python' && !/__init__|test/.test(base)) bugs.push({ sev: 'low', text: 'Check for unhandled exceptions on I/O and external calls.' });
+    if (type === 'javascript') bugs.push({ sev: 'low', text: 'Watch for async race conditions and undefined globals.' });
+    if (!bugs.length) bugs.push({ sev: 'low', text: 'No path-based red flags — run a focused review in chat for logic issues.' });
+
+    const suggestions = [];
+    if (type === 'python') {
+      suggestions.push('Add type hints and docstrings on public functions.');
+      suggestions.push('Extract long functions into smaller, testable units.');
+    } else if (type === 'javascript' || type === 'html' || type === 'styles') {
+      suggestions.push('Keep bundles lean: dedupe dependencies and lazy-load where possible.');
+      suggestions.push('Align naming with design tokens / component library if present.');
+    } else {
+      suggestions.push('Cross-link related modules in doc comments for faster navigation.');
+    }
+    suggestions.push('Use the chat to trace callers and data flow for this file.');
+
+    const related = relatedPathsForFile(path);
+    const depsHtml = related.length
+      ? related
+          .map((p) => {
+            const safeAttr = encodeURIComponent(p);
+            return (
+              `<button type="button" class="dep-node" data-dep-path="${safeAttr}">` +
+              '<span class="dep-line"></span><span class="file-icon" aria-hidden="true">' +
+              fileIconForPath(p) +
+              '</span><span class="dep-name">' +
+              escapeHtml(p) +
+              '</span></button>'
+            );
+          })
+          .join('')
+      : '<div class="insight-muted">No related paths inferred — index more of the tree or ask the model.</div>';
+
+    insightsFileLabel.textContent = path;
+    if (insightsEmptyEl) insightsEmptyEl.hidden = true;
+    if (insightsContentEl) insightsContentEl.hidden = false;
+
+    const elSum = document.getElementById('insight-summary');
+    if (elSum) elSum.innerHTML = summaryByType[type] || summaryByType.other;
+
+    const elLab = document.getElementById('insight-complexity-label');
+    if (elLab) {
+      elLab.textContent = level;
+      elLab.className = 'complexity-badge ' + (level === 'High' ? 'high' : level === 'Medium' ? 'medium' : 'low');
+    }
+    const elSc = document.getElementById('insight-complexity-score');
+    if (elSc) elSc.textContent = String(score);
+    const bar = document.getElementById('insight-complexity-bar');
+    if (bar) bar.style.width = score + '%';
+
+    const bugEl = document.getElementById('insight-bugs');
+    if (bugEl) {
+      bugEl.innerHTML = bugs
+        .map(
+          (b) =>
+            `<div class="bug-item"><span class="bug-sev ${bugSevLabelClass(b.sev)}">${b.sev}</span><span class="bug-text">${b.text}</span></div>`
+        )
+        .join('');
+    }
+
+    const sugEl = document.getElementById('insight-suggestions');
+    if (sugEl) {
+      sugEl.innerHTML = suggestions.map((s) => `<li>${s}</li>`).join('');
+    }
+
+    const depContainer = document.getElementById('insight-deps');
+    if (depContainer) {
+      depContainer.innerHTML = depsHtml;
+      depContainer.querySelectorAll('.dep-node').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const enc = btn.getAttribute('data-dep-path');
+          if (!enc) return;
+          try {
+            selectFile(decodeURIComponent(enc), { prefill: true, goChat: true });
+          } catch (_) {}
+        });
+      });
+    }
+  }
+
+  async function selectFile(path, options = {}) {
+    const { prefill = true, goChat = true } = options;
+    if (!path) return;
+    activeFilePath = path;
+    document.querySelectorAll('#file-items .file-item').forEach((el) => {
+      el.classList.toggle('active', el.getAttribute('data-path') === path);
+    });
+    updateInsightsPanel(path);
+    try {
+      const content = await fetchFileContent(path);
+      activeFileContent = content;
+      renderFileViewer(path, content);
+    } catch (err) {
+      activeFileContent = '';
+      renderFileViewer(path, `// ${err.message || 'Failed to load file content'}`);
+      showToast(err.message || 'Failed to load file', 'error');
+    }
+    if (prefill) {
+      inputEl.value = `Explain the file ${path}`;
+      if (goChat) activateTab('chat');
+      inputEl.focus();
+    }
+  }
+
+  function applySidebarFileFilter() {
+    const q = sidebarSearchQuery.trim().toLowerCase();
+    document.querySelectorAll('#file-items .file-item').forEach((el) => {
+      const p = el.getAttribute('data-path') || '';
+      const show = !q || p.toLowerCase().includes(q);
+      el.classList.toggle('hidden-file', !show);
+    });
+  }
+
   function renderSidebarFileList() {
     const repo = localStorage.getItem('sca_repo');
     if (!repo) {
-      fileItems.innerHTML = `<div style="font-size:11px; color:var(--text-light); padding:6px 6px; font-family:var(--font-mono);">— no files yet —</div>`;
+      fileItems.innerHTML = `<div style="font-size:11px;color:var(--text-dim);padding:8px 6px;font-family:var(--font-mono);">— no files yet —</div>`;
+      if (insightsEmptyEl) insightsEmptyEl.hidden = false;
+      if (insightsContentEl) insightsContentEl.hidden = true;
+      if (insightsFileLabel) insightsFileLabel.textContent = 'Select a file from the tree';
       return;
     }
 
     fileItems.innerHTML = '';
-    MOCK_FILES.forEach((f) => {
+    const list = indexedFiles.length ? indexedFiles : DEFAULT_FILE_LIST;
+    list.forEach((f) => {
       const item = document.createElement('div');
-      item.className = 'file-item';
-      item.innerHTML = `<div class="file-dot"></div>${f}`;
-      item.onclick = () => {
-        document.querySelectorAll('.file-item').forEach((x) => x.classList.remove('active'));
-        item.classList.add('active');
-        inputEl.value = `Explain the file ${f}`;
-        activateTab('chat');
-        inputEl.focus();
-      };
+      item.className = 'file-item' + (activeFilePath === f ? ' active' : '');
+      item.setAttribute('data-path', f);
+      item.setAttribute('role', 'button');
+      item.setAttribute('tabindex', '0');
+      const icon = fileIconForPath(f);
+      item.innerHTML =
+        '<span class="file-icon" aria-hidden="true">' + icon + '</span><span class="file-label">' + escapeHtml(f) + '</span>';
+      item.addEventListener('click', () => selectFile(f, { prefill: true, goChat: true }));
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectFile(f, { prefill: true, goChat: true });
+        }
+      });
       fileItems.appendChild(item);
     });
+    applySidebarFileFilter();
+    if (activeFilePath && list.includes(activeFilePath)) updateInsightsPanel(activeFilePath);
   }
 
   function handleIndex() {
     const url = repoInput.value.trim();
-    if (!url.includes('github.com')) {
+    let parsedUrl = null;
+    try {
+      parsedUrl = new URL(url);
+    } catch (_) {}
+
+    const host = parsedUrl && parsedUrl.hostname ? parsedUrl.hostname.toLowerCase() : '';
+    const isGithubHost = host === 'github.com' || host.endsWith('.github.com');
+    if (!parsedUrl || !isGithubHost) {
       repoError.textContent = 'Please enter a valid GitHub URL';
       showToast('Please enter a valid GitHub URL', 'error');
       return;
@@ -1387,19 +992,43 @@
     repoError.textContent = '';
     localStorage.setItem('sca_repo', url);
     updateRepoBadge(url);
-    renderSidebarFileList();
-    renderFilesPanel();
 
     indexingBar.classList.add('show');
-    progressFill.style.width = '100%';
-    progressPct.textContent = '100%';
-    setTimeout(() => {
-      indexingBar.classList.remove('show');
-      progressFill.style.width = '0%';
-      progressPct.textContent = '0%';
-    }, 500);
+    progressFill.style.width = '35%';
+    progressPct.textContent = '35%';
 
-    showToast('✓ Repository indexed successfully', 'success');
+    fetch('/index', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'repo_url=' + encodeURIComponent(url)
+    })
+      .then((r) => r.json().then((data) => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok || data.status !== 'ok') {
+          throw new Error(data.message || 'Failed to index repository');
+        }
+
+        indexedFiles = Array.isArray(data.files) ? data.files : [];
+        localStorage.setItem('sca_indexed_files', JSON.stringify(indexedFiles));
+
+        progressFill.style.width = '100%';
+        progressPct.textContent = '100%';
+        setTimeout(() => {
+          indexingBar.classList.remove('show');
+          progressFill.style.width = '0%';
+          progressPct.textContent = '0%';
+        }, 500);
+
+        renderSidebarFileList();
+        renderFilesPanel();
+        showToast('✓ Repository indexed successfully', 'success');
+      })
+      .catch((err) => {
+        indexingBar.classList.remove('show');
+        progressFill.style.width = '0%';
+        progressPct.textContent = '0%';
+        showToast(err.message || 'Indexing failed', 'error');
+      });
   }
 
   function updateRepoBadge(url) {
@@ -1414,6 +1043,38 @@
   }
 
   // === FILES PANEL ===
+  function setChatPromptAndSwitch(prompt) {
+    inputEl.value = prompt;
+    activateTab('chat');
+    inputEl.focus();
+  }
+
+  function renderFilesPanelRows(files) {
+    if (!files.length) {
+      return `<div class="panel-empty">No files matched your search/filter.</div>`;
+    }
+    return files.map((name) => {
+      const type = getFileType(name);
+      const safeName = escapeHtml(name);
+      const safeType = escapeHtml(type);
+      const safeDataName = escapeAttr(name);
+      return `
+        <div class="file-row">
+          <div class="file-row-head">
+            <div class="file-path">${safeName}</div>
+            <div class="file-type-tag">${safeType}</div>
+          </div>
+          <div class="file-actions">
+            <button class="file-action-btn" data-action="explain" data-file="${safeDataName}">Explain</button>
+            <button class="file-action-btn" data-action="summary" data-file="${safeDataName}">Summary</button>
+            <button class="file-action-btn" data-action="deps" data-file="${safeDataName}">Dependencies</button>
+            <button class="file-action-btn" data-action="path" data-file="${safeDataName}">Copy path</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
   function renderFilesPanel() {
     const repo = localStorage.getItem('sca_repo');
     if (!repo) {
@@ -1421,19 +1082,91 @@
       return;
     }
 
-    let html = '<div class="mock-file-tree">';
-    MOCK_FILES.forEach((name) => {
-      html += `<div class="file-item" data-file="${name}"><div class="file-dot"></div>${name}</div>`;
+    const query = filesSearchQuery.trim().toLowerCase();
+    const sourceFiles = indexedFiles.length ? indexedFiles : DEFAULT_FILE_LIST;
+    const filteredFiles = sourceFiles.filter((name) => {
+      const type = getFileType(name);
+      const typeOk = filesFilterType === 'all' ? true : type === filesFilterType;
+      const queryOk = query ? name.toLowerCase().includes(query) : true;
+      return typeOk && queryOk;
     });
-    html += '</div>';
-    filesPanelContent.innerHTML = html;
 
-    filesPanelContent.querySelectorAll('.file-item').forEach((item) => {
-      item.addEventListener('click', () => {
-        const filename = item.dataset.file;
-        inputEl.value = `Explain the file ${filename}`;
-        activateTab('chat');
-        inputEl.focus();
+    const typeCounts = {
+      python: sourceFiles.filter((f) => getFileType(f) === 'python').length,
+      frontend: sourceFiles.filter((f) => ['javascript', 'styles', 'html'].includes(getFileType(f))).length
+    };
+
+    filesPanelContent.innerHTML = `
+      <div class="files-toolbar">
+        <input class="files-search" id="files-search-input" type="text" placeholder="Search files (e.g. vector, template, css)" value="${escapeAttr(filesSearchQuery)}">
+        <div class="files-filter-row">
+          <button class="file-filter-btn ${filesFilterType === 'all' ? 'active' : ''}" data-filter="all">All</button>
+          <button class="file-filter-btn ${filesFilterType === 'python' ? 'active' : ''}" data-filter="python">Python</button>
+          <button class="file-filter-btn ${filesFilterType === 'javascript' ? 'active' : ''}" data-filter="javascript">JS</button>
+          <button class="file-filter-btn ${filesFilterType === 'html' ? 'active' : ''}" data-filter="html">HTML</button>
+          <button class="file-filter-btn ${filesFilterType === 'styles' ? 'active' : ''}" data-filter="styles">CSS</button>
+          <button class="file-filter-btn ${filesFilterType === 'docs' ? 'active' : ''}" data-filter="docs">Docs</button>
+        </div>
+      </div>
+
+      <div class="file-stats">
+        <div class="file-stat-card">
+          <div class="file-stat-value">${sourceFiles.length}</div>
+          <div class="file-stat-label">Indexed</div>
+        </div>
+        <div class="file-stat-card">
+          <div class="file-stat-value">${typeCounts.python}</div>
+          <div class="file-stat-label">Python</div>
+        </div>
+        <div class="file-stat-card">
+          <div class="file-stat-value">${typeCounts.frontend}</div>
+          <div class="file-stat-label">Frontend</div>
+        </div>
+      </div>
+
+      ${renderFilesPanelRows(filteredFiles)}
+    `;
+
+    const searchInput = document.getElementById('files-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        filesSearchQuery = e.target.value;
+        renderFilesPanel();
+      });
+    }
+
+    filesPanelContent.querySelectorAll('.file-filter-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        filesFilterType = btn.dataset.filter;
+        renderFilesPanel();
+      });
+    });
+
+    filesPanelContent.querySelectorAll('.file-action-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const filename = btn.dataset.file;
+        const action = btn.dataset.action;
+        if (filename) selectFile(filename, { prefill: false, goChat: false });
+        if (action === 'explain') {
+          setChatPromptAndSwitch(`Explain the file ${filename} in detail.`);
+          return;
+        }
+        if (action === 'summary') {
+          setChatPromptAndSwitch(`Give me a concise summary of ${filename} with key functions/classes.`);
+          return;
+        }
+        if (action === 'deps') {
+          setChatPromptAndSwitch(`List imports and dependencies used in ${filename}.`);
+          return;
+        }
+        if (action === 'path') {
+          try {
+            await navigator.clipboard.writeText(filename);
+            showToast(`Copied: ${filename}`, 'success');
+          } catch (_) {
+            showToast('Could not copy path', 'error');
+          }
+        }
       });
     });
   }
@@ -1477,6 +1210,7 @@
     msgCount = 0;
     msgCountEl.textContent = '0';
     messages.forEach((m) => appendMessage(m.role, m.text));
+    persistCurrentChat();
   }
 
   function renderHistoryPanel() {
@@ -1589,11 +1323,89 @@
     updateHistoryCount();
     loadSettingsIntoInputs();
 
+    const sidebarSearchEl = document.getElementById('sidebar-file-search');
+    if (sidebarSearchEl) {
+      sidebarSearchEl.addEventListener('input', (e) => {
+        sidebarSearchQuery = e.target.value;
+        applySidebarFileFilter();
+      });
+    }
+
+    document.getElementById('prompt-chips')?.addEventListener('click', (e) => {
+      const chip = e.target.closest('.prompt-chip');
+      if (!chip || !chip.dataset.prompt) return;
+      inputEl.value = chip.dataset.prompt.trim();
+      sendMessage();
+    });
+
+    document.querySelectorAll('.code-action-pill').forEach((btn) => {
+      btn.addEventListener('click', () => runCodeAction(btn.dataset.aiAction));
+    });
+
+    if (fileCodeViewer) {
+      fileCodeViewer.addEventListener('mouseup', updateSelectionBadge);
+      fileCodeViewer.addEventListener('keyup', updateSelectionBadge);
+      fileCodeViewer.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        showContextMenu(e.clientX, e.clientY);
+        updateSelectionBadge();
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!contextMenuEl || contextMenuEl.hidden) return;
+      if (!contextMenuEl.contains(e.target)) hideContextMenu();
+    });
+
+    contextMenuEl?.querySelectorAll('.context-item').forEach((btn) => {
+      btn.addEventListener('click', () => runCodeAction(btn.dataset.menuAction));
+    });
+
+    insightCopyBtn?.addEventListener('click', async () => {
+      const txt = insightActionOutputEl?.innerText?.trim() || '';
+      if (!txt) return showToast('Nothing to copy', 'info');
+      try {
+        await navigator.clipboard.writeText(txt);
+        showToast('Output copied', 'success');
+      } catch (_) {
+        showToast('Copy failed', 'error');
+      }
+    });
+
+    insightRegenerateBtn?.addEventListener('click', async () => {
+      if (!lastActionPayload) return showToast('No previous action', 'info');
+      const { actionName, payload } = lastActionPayload;
+      setInsightActionOutput('', { loading: true });
+      try {
+        const res = await fetch(endpointForAction(actionName), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: payload
+        });
+        const data = await res.json();
+        if (!res.ok || data.status !== 'ok') throw new Error(data.message || 'Regenerate failed');
+        const resultText = `### ${actionName.replace('-', ' ').toUpperCase()} · ${activeFilePath}\n\n${data.result || ''}`;
+        setInsightActionOutput(resultText);
+        appendMessage('ai', resultText);
+      } catch (err) {
+        setInsightActionOutput(`Regenerate failed: ${err.message || err}`);
+      }
+    });
+
     const savedTheme = localStorage.getItem('sca_theme') || 'dark';
     applyTheme(savedTheme);
 
     const savedFont = localStorage.getItem('sca_fontsize') || 'medium';
     applyFontSize(savedFont);
+
+    const currentChat = JSON.parse(localStorage.getItem('sca_current_chat') || '[]');
+    if (Array.isArray(currentChat) && currentChat.length) {
+      if (welcomeEl) welcomeEl.style.display = 'none';
+      chatMessages = [];
+      msgCount = 0;
+      msgCountEl.textContent = '0';
+      currentChat.forEach((m) => appendMessage(m.role, m.text));
+    }
 
     const activeTab = localStorage.getItem('sca_active_tab') || 'chat';
     activateTab(activeTab);
