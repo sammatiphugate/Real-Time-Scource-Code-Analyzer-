@@ -93,6 +93,16 @@
           </div>
           Settings
         </div>
+        <div class="nav-item" data-tab="insights" onclick="setNav(this)">
+          <div class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 1.5V12.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              <path d="M1.5 7H12.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              <path d="M3.2 3.2L10.8 10.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          AI Insights
+        </div>
       </nav>
 
       <section class="glass-card section-card flex-grow file-browser">
@@ -110,6 +120,8 @@
     </div>
   </aside>
 
+  <div class="col-gutter" id="gutter-left" role="separator" aria-orientation="vertical" aria-label="Resize left panel"></div>
+
   <main class="panel-center">
     <div class="indexing-bar" id="indexing-bar">
       <span id="indexing-label">Indexing repository...</span>
@@ -117,20 +129,6 @@
         <div class="progress-fill" id="progress-fill"></div>
       </div>
       <span id="progress-pct" style="font-family:var(--font-mono);font-size:11px;">0%</span>
-    </div>
-
-    <div class="chat-header">
-      <div>
-        <div class="chat-header-title">Code Analysis Chat</div>
-        <div class="chat-header-sub" id="header-sub">Ask anything about the indexed codebase</div>
-      </div>
-      <div class="chat-header-right">
-        <div class="status-pill" id="status-pill">
-          <div class="status-dot"></div>
-          Ready
-        </div>
-        <button type="button" class="clear-btn" onclick="clearChat()">Clear</button>
-      </div>
     </div>
 
     <section id="code-workspace" class="code-workspace glass-card" hidden>
@@ -148,41 +146,91 @@
       <div id="code-selection-badge" class="code-selection-badge">Using full file</div>
       <pre id="file-code-viewer" class="file-code-viewer"><code id="file-code-content" class="language-python"></code></pre>
     </section>
+  </main>
 
-    <div class="center-panels">
-      <div class="messages" id="messages">
-        <div class="welcome" id="welcome-screen">
-          <div class="welcome-icon">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <rect x="3" y="3" width="10" height="10" rx="2" fill="url(#wg)" opacity="0.95"/>
-              <rect x="15" y="3" width="10" height="10" rx="2" fill="url(#wg)" opacity="0.55"/>
-              <rect x="3" y="15" width="10" height="10" rx="2" fill="url(#wg)" opacity="0.55"/>
-              <rect x="15" y="15" width="10" height="10" rx="2" fill="url(#wg)" opacity="0.25"/>
-              <defs>
-                <linearGradient id="wg" x1="3" y1="3" x2="23" y2="23" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#a78bfa"/><stop offset="1" stop-color="#2563eb"/>
-                </linearGradient>
-              </defs>
-            </svg>
+  <div class="col-gutter" id="gutter-right" role="separator" aria-orientation="vertical" aria-label="Resize right panel"></div>
+
+  <aside class="panel-right" id="workspace-aside">
+    <div class="workspace-right-top">
+      <div class="workspace-right-title">Workspace</div>
+      <button type="button" class="workspace-collapse-btn" id="right-collapse-btn" aria-label="Collapse workspace">
+        <span class="chev">›</span>
+      </button>
+    </div>
+
+    <div class="workspace-right-body">
+      <div class="workspace-panel active-panel" id="panel-chat">
+        <div class="chat-header">
+          <div>
+            <div class="chat-header-title">Code Analysis Chat</div>
+            <div class="chat-header-sub" id="header-sub">Ask anything about the indexed codebase</div>
           </div>
-          <div class="welcome-title">AI Source Analysis</div>
-          <div class="welcome-sub">Index a GitHub repository, explore files on the left, and ask deep questions about architecture, logic, and dependencies.</div>
-          <div class="suggestions">
-            <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">What does app.py do?</button>
-            <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">Explain the RAG pipeline</button>
-            <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">How are embeddings stored?</button>
-            <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">List all helper functions</button>
-            <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">What is the entry point?</button>
+          <div class="chat-header-right">
+            <div class="status-pill" id="status-pill">
+              <div class="status-dot"></div>
+              Ready
+            </div>
+            <button type="button" class="clear-btn" onclick="clearChat()">Clear</button>
           </div>
+        </div>
+
+        <div class="messages" id="messages">
+          <div class="welcome" id="welcome-screen">
+            <div class="welcome-icon">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <rect x="3" y="3" width="10" height="10" rx="2" fill="url(#wg)" opacity="0.95"/>
+                <rect x="15" y="3" width="10" height="10" rx="2" fill="url(#wg)" opacity="0.55"/>
+                <rect x="3" y="15" width="10" height="10" rx="2" fill="url(#wg)" opacity="0.55"/>
+                <rect x="15" y="15" width="10" height="10" rx="2" fill="url(#wg)" opacity="0.25"/>
+                <defs>
+                  <linearGradient id="wg" x1="3" y1="3" x2="23" y2="23" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#a78bfa"/><stop offset="1" stop-color="#2563eb"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <div class="welcome-title">AI Source Analysis</div>
+            <div class="welcome-sub">Index a GitHub repository, explore files on the left, and ask deep questions about architecture, logic, and dependencies.</div>
+            <div class="suggestions">
+              <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">What does app.py do?</button>
+              <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">Explain the RAG pipeline</button>
+              <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">How are embeddings stored?</button>
+              <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">List all helper functions</button>
+              <button type="button" class="suggestion-chip" onclick="useSuggestion(this)">What is the entry point?</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="sticky-chat-footer" class="sticky-chat-footer">
+          <div class="prompt-strip">
+            <span class="prompt-strip-label">SUGGESTED</span>
+            <div id="prompt-chips" class="prompt-chips">
+              <button type="button" class="prompt-chip" data-prompt="Summarize the repository architecture in 5 bullets.">Architecture overview</button>
+              <button type="button" class="prompt-chip" data-prompt="Where is the main entry point and how does request flow work?">Trace request flow</button>
+              <button type="button" class="prompt-chip" data-prompt="What are the main classes and their responsibilities?">Key classes</button>
+              <button type="button" class="prompt-chip" data-prompt="Find potential bugs or risky patterns in this codebase.">Risk scan</button>
+            </div>
+          </div>
+          <div class="input-bar">
+            <textarea id="msg-input" rows="1" placeholder="Ask about any function, class, or file…"></textarea>
+            <div class="input-actions">
+              <button type="button" class="send-btn" id="send-btn" onclick="sendMessage()" aria-label="Send">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 11.5V2.5M7 2.5L3 6.5M7 2.5L11 6.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="input-hint"><kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> new line</div>
         </div>
       </div>
 
-      <div class="main-panel" id="panel-files">
+      <div class="workspace-panel main-panel" id="panel-files">
         <div class="panel-title">Indexed Files</div>
         <div id="files-panel-content"></div>
       </div>
 
-      <div class="main-panel" id="panel-history">
+      <div class="workspace-panel main-panel" id="panel-history">
         <div class="panel-title">Chat History</div>
         <div class="history-actions">
           <button type="button" class="panel-btn danger" onclick="clearHistory()">Clear History</button>
@@ -190,7 +238,7 @@
         <div id="history-panel-content"></div>
       </div>
 
-      <div class="main-panel" id="panel-settings">
+      <div class="workspace-panel main-panel" id="panel-settings">
         <div class="panel-title">Settings</div>
         <div class="settings-grid">
           <div class="glass-card settings-section">
@@ -247,79 +295,61 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <div id="sticky-chat-footer" class="sticky-chat-footer">
-      <div class="prompt-strip">
-        <span class="prompt-strip-label">SUGGESTED</span>
-        <div id="prompt-chips" class="prompt-chips">
-          <button type="button" class="prompt-chip" data-prompt="Summarize the repository architecture in 5 bullets.">Architecture overview</button>
-          <button type="button" class="prompt-chip" data-prompt="Where is the main entry point and how does request flow work?">Trace request flow</button>
-          <button type="button" class="prompt-chip" data-prompt="What are the main classes and their responsibilities?">Key classes</button>
-          <button type="button" class="prompt-chip" data-prompt="Find potential bugs or risky patterns in this codebase.">Risk scan</button>
+      <div class="workspace-panel" id="panel-insights">
+        <div class="insights-top">
+          <div class="insights-title">AI Insights</div>
+          <p class="insights-sub" id="insights-file-label">Select a file from the tree</p>
+        </div>
+        <div class="insights-scroll" id="insights-scroll">
+          <div id="insights-empty" class="insights-placeholder glass-card">
+            Click a file to view summary, heuristic complexity, risk patterns, and related paths — then refine in chat.
+          </div>
+          <div id="insights-content" class="insights-content" hidden>
+            <section class="insight-section glass-card">
+              <h3 class="insight-h">File summary</h3>
+              <p class="insight-text" id="insight-summary"></p>
+            </section>
+            <section class="insight-section glass-card">
+              <h3 class="insight-h">Complexity</h3>
+              <div class="complexity-row">
+                <span id="insight-complexity-label" class="complexity-badge">—</span>
+                <span id="insight-complexity-score" class="complexity-score">0</span>
+              </div>
+              <div class="progress-track complexity-bar"><div class="progress-fill" id="insight-complexity-bar"></div></div>
+            </section>
+            <section class="insight-section glass-card">
+              <h3 class="insight-h">Bugs &amp; risks</h3>
+              <div class="bug-list" id="insight-bugs"></div>
+            </section>
+            <section class="insight-section glass-card">
+              <h3 class="insight-h">Suggestions</h3>
+              <ul class="suggest-list" id="insight-suggestions"></ul>
+            </section>
+            <section class="insight-section glass-card">
+              <div class="insight-head-row">
+                <h3 class="insight-h">Action Output</h3>
+                <div class="insight-head-actions">
+                  <button type="button" id="insight-copy-btn" class="mini-ghost-btn">Copy</button>
+                  <button type="button" id="insight-regenerate-btn" class="mini-ghost-btn">Regenerate</button>
+                </div>
+              </div>
+              <div id="insight-action-output" class="insight-action-output">Run an action from file pills or context menu to view output here.</div>
+            </section>
+            <section class="insight-section glass-card">
+              <h3 class="insight-h">Dependencies</h3>
+              <div class="dep-graph" id="insight-deps"></div>
+            </section>
+          </div>
         </div>
       </div>
-      <div class="input-bar">
-        <textarea id="msg-input" rows="1" placeholder="Ask about any function, class, or file…"></textarea>
-        <div class="input-actions">
-          <button type="button" class="send-btn" id="send-btn" onclick="sendMessage()" aria-label="Send">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 11.5V2.5M7 2.5L3 6.5M7 2.5L11 6.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="input-hint"><kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> new line</div>
-    </div>
-  </main>
 
-  <aside class="panel-right" id="insights-aside">
-    <div class="insights-top">
-      <div class="insights-title">AI Insights</div>
-      <p class="insights-sub" id="insights-file-label">Select a file from the tree</p>
-    </div>
-    <div class="insights-scroll" id="insights-scroll">
-      <div id="insights-empty" class="insights-placeholder glass-card">
-        Click a file to view summary, heuristic complexity, risk patterns, and related paths — then refine in chat.
-      </div>
-      <div id="insights-content" class="insights-content" hidden>
-        <section class="insight-section glass-card">
-          <h3 class="insight-h">File summary</h3>
-          <p class="insight-text" id="insight-summary"></p>
-        </section>
-        <section class="insight-section glass-card">
-          <h3 class="insight-h">Complexity</h3>
-          <div class="complexity-row">
-            <span id="insight-complexity-label" class="complexity-badge">—</span>
-            <span id="insight-complexity-score" class="complexity-score">0</span>
-          </div>
-          <div class="progress-track complexity-bar"><div class="progress-fill" id="insight-complexity-bar"></div></div>
-        </section>
-        <section class="insight-section glass-card">
-          <h3 class="insight-h">Bugs &amp; risks</h3>
-          <div class="bug-list" id="insight-bugs"></div>
-        </section>
-        <section class="insight-section glass-card">
-          <h3 class="insight-h">Suggestions</h3>
-          <ul class="suggest-list" id="insight-suggestions"></ul>
-        </section>
-        <section class="insight-section glass-card">
-          <div class="insight-head-row">
-            <h3 class="insight-h">Action Output</h3>
-            <div class="insight-head-actions">
-              <button type="button" id="insight-copy-btn" class="mini-ghost-btn">Copy</button>
-              <button type="button" id="insight-regenerate-btn" class="mini-ghost-btn">Regenerate</button>
-            </div>
-          </div>
-          <div id="insight-action-output" class="insight-action-output">Run an action from file pills or context menu to view output here.</div>
-        </section>
-        <section class="insight-section glass-card">
-          <h3 class="insight-h">Dependencies</h3>
-          <div class="dep-graph" id="insight-deps"></div>
-        </section>
-      </div>
     </div>
   </aside>
+
+  <button type="button" id="right-rail-btn" class="right-rail" aria-label="Expand workspace" title="Expand workspace">
+    <span class="right-rail-chev">‹</span>
+  </button>
 
 </div>
 <!-- Toast -->
@@ -361,11 +391,146 @@
   const insightRegenerateBtn = document.getElementById('insight-regenerate-btn');
   const navItems = document.querySelectorAll('.nav-item');
   const panels = {
-    chat: document.getElementById('messages'),
+    chat: document.getElementById('panel-chat'),
     files: document.getElementById('panel-files'),
     history: document.getElementById('panel-history'),
-    settings: document.getElementById('panel-settings')
+    settings: document.getElementById('panel-settings'),
+    insights: document.getElementById('panel-insights')
   };
+
+  // === LAYOUT: COLLAPSE + RESIZE (PERSISTED) ===
+  const appEl = document.querySelector('.app');
+  const leftPanelEl = document.querySelector('.panel-left');
+  const rightPanelEl = document.querySelector('.panel-right');
+  const gutterLeftEl = document.getElementById('gutter-left');
+  const gutterRightEl = document.getElementById('gutter-right');
+  const rightCollapseBtn = document.getElementById('right-collapse-btn');
+  const rightRailBtn = document.getElementById('right-rail-btn');
+
+  const COL_WIDTHS_KEY = 'sca_col_widths';
+  const RIGHT_COLLAPSED_KEY = 'sca_right_collapsed';
+  const GUTTER_W = 8;
+  const MIN_LEFT = 200;
+  const MIN_RIGHT = 260;
+  const MIN_CENTER = 420;
+
+  function getPxWidth(el) {
+    if (!el) return 0;
+    return Math.round(el.getBoundingClientRect().width || 0);
+  }
+
+  function applyColWidths(widths) {
+    if (!appEl) return;
+    if (typeof widths.left === 'number') appEl.style.setProperty('--left-w', `${Math.round(widths.left)}px`);
+    if (typeof widths.right === 'number') appEl.style.setProperty('--right-w', `${Math.round(widths.right)}px`);
+  }
+
+  function loadColWidths() {
+    try {
+      const raw = localStorage.getItem(COL_WIDTHS_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return null;
+      return {
+        left: typeof parsed.left === 'number' ? parsed.left : null,
+        right: typeof parsed.right === 'number' ? parsed.right : null
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  function saveColWidths(widths) {
+    try {
+      localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify({ left: widths.left, right: widths.right }));
+    } catch {}
+  }
+
+  function setRightCollapsed(collapsed) {
+    if (!appEl) return;
+    appEl.classList.toggle('right-collapsed', !!collapsed);
+    try {
+      localStorage.setItem(RIGHT_COLLAPSED_KEY, collapsed ? '1' : '0');
+    } catch {}
+    if (rightCollapseBtn) {
+      rightCollapseBtn.setAttribute('aria-label', collapsed ? 'Expand workspace' : 'Collapse workspace');
+      rightCollapseBtn.classList.toggle('is-collapsed', !!collapsed);
+    }
+    if (rightRailBtn) rightRailBtn.hidden = !collapsed;
+  }
+
+  function loadRightCollapsed() {
+    try {
+      return localStorage.getItem(RIGHT_COLLAPSED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function setupGutterResize(gutterEl, side) {
+    if (!gutterEl || !appEl) return;
+
+    gutterEl.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      if (appEl.classList.contains('right-collapsed') && side === 'right') return;
+
+      e.preventDefault();
+      gutterEl.setPointerCapture(e.pointerId);
+
+      const total = Math.round(appEl.getBoundingClientRect().width || window.innerWidth);
+      const startX = e.clientX;
+      const startLeft = getPxWidth(leftPanelEl);
+      const startRight = appEl.classList.contains('right-collapsed') ? 0 : getPxWidth(rightPanelEl);
+
+      document.body.classList.add('is-resizing');
+
+      function onMove(ev) {
+        const dx = ev.clientX - startX;
+        if (side === 'left') {
+          const maxLeft = total - startRight - MIN_CENTER - (GUTTER_W * 2);
+          const nextLeft = clamp(startLeft + dx, MIN_LEFT, Math.max(MIN_LEFT, maxLeft));
+          applyColWidths({ left: nextLeft });
+        } else {
+          const maxRight = total - startLeft - MIN_CENTER - (GUTTER_W * 2);
+          const nextRight = clamp(startRight - dx, MIN_RIGHT, Math.max(MIN_RIGHT, maxRight));
+          applyColWidths({ right: nextRight });
+        }
+      }
+
+      function onUp(ev) {
+        document.body.classList.remove('is-resizing');
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+
+        const currentLeft = getPxWidth(leftPanelEl);
+        const currentRight = appEl.classList.contains('right-collapsed') ? 0 : getPxWidth(rightPanelEl);
+        const prev = loadColWidths() || {};
+        saveColWidths({
+          left: typeof prev.left === 'number' ? currentLeft : currentLeft,
+          right: typeof prev.right === 'number' ? currentRight : currentRight
+        });
+      }
+
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp, { once: true });
+    });
+  }
+
+  // Apply persisted layout on load
+  (function initLayout() {
+    const widths = loadColWidths();
+    if (widths) applyColWidths(widths);
+    setRightCollapsed(loadRightCollapsed());
+    if (rightRailBtn) rightRailBtn.hidden = !appEl.classList.contains('right-collapsed');
+    if (rightCollapseBtn) rightCollapseBtn.addEventListener('click', () => setRightCollapsed(!appEl.classList.contains('right-collapsed')));
+    if (rightRailBtn) rightRailBtn.addEventListener('click', () => setRightCollapsed(false));
+    setupGutterResize(gutterLeftEl, 'left');
+    setupGutterResize(gutterRightEl, 'right');
+  })();
 
   const DEFAULT_FILE_LIST = ['app.py', 'ingest.py', 'vectorstore.py', 'templates/', 'static/'];
   let msgCount = 0;
@@ -423,13 +588,11 @@
   function activateTab(tab) {
     navItems.forEach((item) => item.classList.toggle('active', item.dataset.tab === tab));
     Object.keys(panels).forEach((key) => {
-      if (key === 'chat') {
-        panels[key].style.display = tab === 'chat' ? 'flex' : 'none';
-      } else {
-        panels[key].classList.toggle('active-panel', tab === key);
-      }
+      const el = panels[key];
+      if (!el) return;
+      el.hidden = tab !== key;
+      el.classList.toggle('active-panel', tab === key);
     });
-    if (stickyChatFooter) stickyChatFooter.style.display = tab === 'chat' ? 'block' : 'none';
     localStorage.setItem('sca_active_tab', tab);
 
     if (tab === 'files') renderFilesPanel();
