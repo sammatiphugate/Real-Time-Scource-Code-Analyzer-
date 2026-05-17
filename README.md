@@ -29,10 +29,10 @@ pip install -r requirements.txt
 ```
 
 
-### Create a `.env` file in the root directory and add your OPENAI_API_KEY credentials as follows:
+### Create a `.env` file in the root directory and add your Groq API key:
 
 ```ini
-OPENAI_API_KEY = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+GROQ_API_KEY="xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
 
@@ -43,7 +43,10 @@ python app.py
 
 Now,
 ```bash
-open up localhost:
+Then open the app in your browser:
+
+```
+http://localhost:8080
 ```
 
 
@@ -52,6 +55,10 @@ open up localhost:
 - Python
 - LangChain
 - Flask
-- OpenAI
-- GPT 3
-- ChoromaDB
+- Groq (LLM inference)
+- HuggingFace Sentence Transformers (embeddings)
+- ChromaDB
+
+### Documentation
+
+See `docs/PROJECT_REPORT.md` for the full project write-up (architecture, diagrams, testing, etc.).

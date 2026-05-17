@@ -42,7 +42,7 @@
         <div class="sidebar-label">INDEX REPOSITORY</div>
         <div class="repo-input-wrap">
           <span class="repo-input-icon">⌥</span>
-          <input class="repo-input" id="repo-url" type="text" placeholder="https://github.com/user/repo" value="" />
+          <input class="repo-input" id="repo-url" type="text" placeholder="https://github.com/d-hackmt/brain-breast-cancer" value="" />
         </div>
         <div class="repo-error" id="repo-error"></div>
         <button type="button" class="index-btn" id="index-btn" onclick="handleIndex()">
@@ -532,7 +532,6 @@
     setupGutterResize(gutterRightEl, 'right');
   })();
 
-  const DEFAULT_FILE_LIST = ['app.py', 'ingest.py', 'vectorstore.py', 'templates/', 'static/'];
   let msgCount = 0;
   let isLoading = false;
   let chatMessages = [];
@@ -949,7 +948,7 @@
   }
 
   function relatedPathsForFile(path) {
-    const all = indexedFiles.length ? indexedFiles : DEFAULT_FILE_LIST;
+    const all = indexedFiles;
     const others = all.filter((p) => p !== path);
     const parts = path.split('/');
     const parent = parts.slice(0, -1).join('/');
@@ -1114,7 +1113,14 @@
     }
 
     fileItems.innerHTML = '';
-    const list = indexedFiles.length ? indexedFiles : DEFAULT_FILE_LIST;
+    if (!indexedFiles.length) {
+      fileItems.innerHTML = `<div style="font-size:11px;color:var(--text-dim);padding:8px 6px;font-family:var(--font-mono);line-height:1.45;">No file list yet. Click <strong>Index Repository</strong> and wait for success — the tree shows only real <code>.py</code> paths from your repo.</div>`;
+      if (insightsEmptyEl) insightsEmptyEl.hidden = false;
+      if (insightsContentEl) insightsContentEl.hidden = true;
+      if (insightsFileLabel) insightsFileLabel.textContent = 'Select a file from the tree';
+      return;
+    }
+    const list = indexedFiles;
     list.forEach((f) => {
       const item = document.createElement('div');
       item.className = 'file-item' + (activeFilePath === f ? ' active' : '');
@@ -1153,8 +1159,6 @@
     }
 
     repoError.textContent = '';
-    localStorage.setItem('sca_repo', url);
-    updateRepoBadge(url);
 
     indexingBar.classList.add('show');
     progressFill.style.width = '35%';
@@ -1173,6 +1177,8 @@
 
         indexedFiles = Array.isArray(data.files) ? data.files : [];
         localStorage.setItem('sca_indexed_files', JSON.stringify(indexedFiles));
+        localStorage.setItem('sca_repo', url);
+        updateRepoBadge(url);
 
         progressFill.style.width = '100%';
         progressPct.textContent = '100%';
@@ -1190,6 +1196,17 @@
         indexingBar.classList.remove('show');
         progressFill.style.width = '0%';
         progressPct.textContent = '0%';
+        indexedFiles = [];
+        localStorage.removeItem('sca_indexed_files');
+        localStorage.removeItem('sca_repo');
+        activeFilePath = null;
+        activeFileContent = '';
+        updateRepoBadge('');
+        renderSidebarFileList();
+        renderFilesPanel();
+        if (fileCodeContent) {
+          fileCodeContent.textContent = '// Index a repository to load files';
+        }
         showToast(err.message || 'Indexing failed', 'error');
       });
   }
@@ -1246,7 +1263,11 @@
     }
 
     const query = filesSearchQuery.trim().toLowerCase();
-    const sourceFiles = indexedFiles.length ? indexedFiles : DEFAULT_FILE_LIST;
+    if (!indexedFiles.length) {
+      filesPanelContent.innerHTML = `<div class="panel-empty">No files listed yet. After a successful index, Python files from the repo appear here. If indexing failed, check the toast error (e.g. <code>git</code> not installed or macOS blocking access to the project folder).</div>`;
+      return;
+    }
+    const sourceFiles = indexedFiles;
     const filteredFiles = sourceFiles.filter((name) => {
       const type = getFileType(name);
       const typeOk = filesFilterType === 'all' ? true : type === filesFilterType;
@@ -1387,13 +1408,17 @@
       .slice()
       .reverse()
       .map((item) => {
-        const repoName = getRepoName(item.repo || 'No repo');
-        const date = new Date(item.timestamp).toLocaleString();
+        const repoName = escapeHtml(getRepoName(item.repo || 'No repo'));
+        const date = escapeHtml(new Date(item.timestamp).toLocaleString());
+        const preview = escapeHtml(item.preview || 'No preview');
         return `
           <div class="panel-card">
             <div class="history-meta">${repoName} · ${date}</div>
-            <div class="history-preview">${item.preview || 'No preview'}</div>
-            <button class="panel-btn" data-load-id="${item.id}">Load</button>
+            <div class="history-preview">${preview}</div>
+            <div class="history-card-actions">
+              <button type="button" class="panel-btn" data-load-id="${item.id}">Load</button>
+              <button type="button" class="panel-btn danger" data-delete-id="${item.id}">Delete</button>
+            </div>
           </div>
         `;
       })
@@ -1408,6 +1433,34 @@
         activateTab('chat');
       });
     });
+
+    historyPanelContent.querySelectorAll('[data-delete-id]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = Number(btn.dataset.deleteId);
+        deleteHistorySession(id);
+      });
+    });
+  }
+
+  function deleteHistorySession(id) {
+    if (!id || !Number.isFinite(id)) return;
+    if (!confirm('Delete this saved session from history?')) return;
+
+    let history = JSON.parse(localStorage.getItem('sca_history') || '[]');
+    if (!Array.isArray(history) || !history.length) return;
+
+    const next = history.filter((h) => h.id !== id);
+    if (next.length === history.length) {
+      showToast('Session not found', 'info');
+      return;
+    }
+
+    if (next.length) localStorage.setItem('sca_history', JSON.stringify(next));
+    else localStorage.removeItem('sca_history');
+
+    updateHistoryCount();
+    renderHistoryPanel();
+    showToast('Session deleted', 'success');
   }
 
   function clearHistory() {

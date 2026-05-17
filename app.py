@@ -1,16 +1,18 @@
 from flask import Flask, render_template, jsonify, request
 from dotenv import load_dotenv
+import gc
 import os
-from git import Repo
 import shutil
+import time
 from src.helper import load_embedding, repo_ingestion
+from src.paths import REPO_DIR, DB_DIR, PROJECT_ROOT
 from pathlib import Path
 
 # ✅ Updated imports
 from langchain_community.vectorstores import Chroma
 from langchain_groq import ChatGroq
-from langchain.memory import ConversationSummaryMemory
-from langchain.chains import ConversationalRetrievalChain
+from langchain_classic.memory import ConversationSummaryMemory
+from langchain_classic.chains import ConversationalRetrievalChain
 
 # ✅ CHANGE 1: Added these imports needed for /index route
 from langchain_community.document_loaders.generic import GenericLoader
@@ -37,12 +39,9 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 # ==============================
 embeddings = load_embedding()
 
-persist_directory = "db"
-
-vectordb = Chroma(
-    persist_directory=persist_directory,
-    embedding_function=embeddings
-)
+vectordb = None
+qa = None
+memory = None
 
 
 # ==============================
@@ -55,27 +54,65 @@ llm = ChatGroq(
 )
 
 
-# ==============================
-# Memory
-# ==============================
-memory = ConversationSummaryMemory(
-    llm=llm,
-    memory_key="chat_history",
-    return_messages=True
-)
+def _chroma_db_ready() -> bool:
+    return (DB_DIR / "chroma.sqlite3").is_file()
 
 
-# ==============================
-# QA Chain
-# ==============================
-qa = ConversationalRetrievalChain.from_llm(
-    llm,
-    retriever=vectordb.as_retriever(
-        search_type="mmr",
-        search_kwargs={"k": 3}
-    ),
-    memory=memory
-)
+def _close_vectordb() -> None:
+    """Release Chroma/SQLite handles before deleting db/ (prevents readonly DB errors)."""
+    global vectordb
+    if vectordb is None:
+        return
+    try:
+        client = getattr(vectordb, "_client", None)
+        if client is not None and hasattr(client, "clear_system_cache"):
+            client.clear_system_cache()
+    except Exception:
+        pass
+    vectordb = None
+    gc.collect()
+    time.sleep(0.1)
+
+
+def _prepare_db_dir() -> None:
+    _close_vectordb()
+    if DB_DIR.exists():
+        shutil.rmtree(DB_DIR)
+    DB_DIR.mkdir(parents=True, exist_ok=True)
+    os.chmod(DB_DIR, 0o755)
+
+
+def _build_qa_chain(store: Chroma):
+    global memory
+    memory = ConversationSummaryMemory(
+        llm=llm,
+        memory_key="chat_history",
+        return_messages=True,
+    )
+    return ConversationalRetrievalChain.from_llm(
+        llm,
+        retriever=store.as_retriever(
+            search_type="mmr",
+            search_kwargs={"k": 3},
+        ),
+        memory=memory,
+    )
+
+
+def _load_vectordb_from_disk() -> None:
+    global vectordb, qa
+    if not _chroma_db_ready():
+        vectordb = None
+        qa = None
+        return
+    vectordb = Chroma(
+        persist_directory=str(DB_DIR),
+        embedding_function=embeddings,
+    )
+    qa = _build_qa_chain(vectordb)
+
+
+_load_vectordb_from_disk()
 
 
 def _safe_ai_text(result):
@@ -92,7 +129,7 @@ def _safe_ai_text(result):
 
 def _read_repo_file(rel_path: str) -> str:
     """Read a file only from inside ./repo safely."""
-    repo_root = Path("repo").resolve()
+    repo_root = REPO_DIR.resolve()
     target = (repo_root / (rel_path or "")).resolve()
     if repo_root not in target.parents and target != repo_root:
         raise ValueError("Invalid file path")
@@ -156,24 +193,18 @@ def index_repo():
         return jsonify({"status": "error", "message": "repo_url is required"}), 400
 
     try:
-        # ✅ CHANGE 4: Using shutil.rmtree instead of os.system("rm -rf ...")
-        #    shutil works on Windows, Mac, and Linux — os.system rm does not
-        if os.path.exists("repo"):
-            shutil.rmtree("repo")
-        if os.path.exists("db"):
-            shutil.rmtree("db")
-
         print("Cloning repo:", repo_url)
 
-        # Clone repo (same logic as before via repo_ingestion)
         repo_ingestion(repo_url)
+
+        _prepare_db_dir()
 
         # ✅ CHANGE 5: Replaced os.system("python store_index.py") with
         #    inline loading + splitting + embedding so we can:
         #    a) get the file list to send back to the HTML sidebar
         #    b) rebuild the global qa chain immediately after indexing
         loader = GenericLoader.from_filesystem(
-            "repo",
+            str(REPO_DIR),
             glob="**/*",
             suffixes=[".py"],
             parser=LanguageParser(language=Language.PYTHON, parser_threshold=500)
@@ -187,34 +218,24 @@ def index_repo():
         )
         texts = splitter.split_documents(documents)
 
+        if not texts:
+            return jsonify(
+                {"status": "error", "message": "No Python files found in this repository."}
+            ), 400
+
         # Embed into ChromaDB
-        new_vectordb = Chroma.from_documents(
+        global vectordb, qa
+        vectordb = Chroma.from_documents(
             texts,
             embedding=embeddings,
-            persist_directory="./db"
+            persist_directory=str(DB_DIR),
         )
-
-        # ✅ CHANGE 6: Rebuild qa chain globally so /get uses the new repo's DB
-        #    Without this, chat would still answer from the old vector store
-        global qa, memory
-        memory = ConversationSummaryMemory(
-            llm=llm,
-            memory_key="chat_history",
-            return_messages=True
-        )
-        qa = ConversationalRetrievalChain.from_llm(
-            llm,
-            retriever=new_vectordb.as_retriever(
-                search_type="mmr",
-                search_kwargs={"k": 3}
-            ),
-            memory=memory
-        )
+        qa = _build_qa_chain(vectordb)
 
         # ✅ CHANGE 7: Build file list to send back to HTML
         #    HTML sidebar uses this to show indexed files in left panel
         files = [
-            os.path.relpath(doc.metadata["source"], "repo")
+            os.path.relpath(doc.metadata["source"], str(REPO_DIR))
             for doc in documents
         ]
         files = list(dict.fromkeys(files))  # deduplicate
@@ -241,16 +262,31 @@ def chat():
     print("User:", user_input)
 
     if user_input.lower() == "clear":
-        # ✅ CHANGE 9: Replaced os.system("rm -rf repo db") with shutil.rmtree
-        #    Same reason as CHANGE 4 — cross-platform safety
-        if os.path.exists("repo"):
-            shutil.rmtree("repo")
-        if os.path.exists("db"):
-            shutil.rmtree("db")
+        global vectordb, qa
+        _close_vectordb()
+        qa = None
+        if REPO_DIR.exists():
+            shutil.rmtree(REPO_DIR)
+        if DB_DIR.exists():
+            shutil.rmtree(DB_DIR)
         return "Cleared repository and database."
 
-    # Unchanged — same qa call as before
-    result = qa({"question": user_input})
+    if qa is None:
+        return (
+            "No indexed repository yet. Paste a GitHub URL and click "
+            '"Index Repository", then ask your question again.'
+        )
+
+    try:
+        result = qa({"question": user_input})
+    except Exception as exc:
+        err = str(exc)
+        if "readonly database" in err.lower() or "1032" in err:
+            return (
+                "Vector database is locked or corrupted. Click Index Repository again "
+                "to rebuild it, or type 'clear' and re-index."
+            )
+        raise
 
     print("Bot:", result["answer"])
 
@@ -326,4 +362,5 @@ def comment():
 # Run App
 # ==============================
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    os.chdir(PROJECT_ROOT)
+    app.run(host="0.0.0.0", port=8080, debug=True, use_reloader=False)

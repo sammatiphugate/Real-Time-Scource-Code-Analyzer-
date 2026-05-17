@@ -1129,6 +1129,14 @@ body.light-mode .files-search { background: #fff; }
 
 .history-actions { display: flex; justify-content: flex-end; margin-bottom: 14px; }
 
+.history-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
 .history-meta { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; font-family: var(--font-mono); }
 .history-preview { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
 
